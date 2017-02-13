@@ -26,25 +26,29 @@ print "features", enron_data.items()[0][1].keys()
 npoi = 0
 nsal = 0
 nemail = 0
+ntpay=0
+nppoi=0
+print "name                         poi    salary     payment  stock_value    poi_to_this"
 for name in enron_data.keys():
-	if (enron_data[name]["poi"] == 1): npoi = npoi + 1
+	if (enron_data[name]['total_payments'] > 2000000 or enron_data[name]['from_poi_to_this_person'] > 50 or enron_data[name]['from_this_person_to_poi'] > 50):
+		print '{0:20} {1:>10} {2:>10} {3:>10} {4:>10} {5:>10}'.format(name[:20], 
+												enron_data[name]['poi'],
+												enron_data[name]['salary'], 
+												enron_data[name]['total_payments'], 
+												enron_data[name]['total_stock_value'],
+												enron_data[name]['from_poi_to_this_person'])
+	if (enron_data[name]["poi"] == 1): 
+		npoi = npoi + 1
+		if (enron_data[name]["total_payments"] != "NaN"): nppoi = nppoi + 1
 	if (enron_data[name]["salary"] != "NaN"): nsal = nsal + 1
 	if (enron_data[name]["email_address"] != "NaN"): nemail = nemail + 1
-	if ("JAMES" in name and "PRENTICE" in name): 
-		print name, "stock value", enron_data[name]["total_stock_value"]
-	if ("WESLEY" in name and "COLWELL" in name):
-		print name, "messages to poi:", enron_data[name]["from_this_person_to_poi"]
-	if ("SKILLING" in name and "JEFFREY" in name):
-		print name, "Stock Options:", enron_data[name]["exercised_stock_options"]
-		print name, "Total Payments:", enron_data[name]["total_payments"]
-	if ("KENNETH" in name and "LAY" in name):
-		print name, "Total Payments:", enron_data[name]["total_payments"]
-	if ("FASTOW" in name):
-		print name, "Total Payments:", enron_data[name]["total_payments"]
+	if (enron_data[name]["total_payments"] != "NaN"): ntpay = ntpay + 1
 
 print "number of person of interest:", npoi
 print "number of person getting salary:", nsal
 print "number of person with email address:", nemail
+print "number of person with total payments:", ntpay
+print "number of poi with total payments:", nppoi
 
 poi_names={}
 npoi = 0
