@@ -9,7 +9,7 @@
 
     that process should happen at the end of poi_id.py
 """
-
+import numpy as np
 import pickle
 import sys
 from sklearn.cross_validation import StratifiedShuffleSplit
@@ -22,7 +22,10 @@ Recall: {:>0.{display_precision}f}\tF1: {:>0.{display_precision}f}\tF2: {:>0.{di
 RESULTS_FORMAT_STRING = "\tTotal predictions: {:4d}\tTrue positives: {:4d}\tFalse positives: {:4d}\
 \tFalse negatives: {:4d}\tTrue negatives: {:4d}"
 
+#initialize all key metrics
+
 def test_classifier(clf, dataset, feature_list, folds = 1000):
+    accuracy = precision = recall = f1 = f2 = 0.0
     data = featureFormat(dataset, feature_list, sort_keys = True)
     labels, features = targetFeatureSplit(data)
     cv = StratifiedShuffleSplit(labels, folds, random_state = 42)
@@ -43,8 +46,11 @@ def test_classifier(clf, dataset, feature_list, folds = 1000):
             labels_test.append( labels[jj] )
         
         ### fit the classifier using training set, and test on test set
-        clf.fit(features_train, labels_train)
-        predictions = clf.predict(features_test)
+        x = np.array(features_train)
+        y = np.array(labels_train)
+        clf.fit(x, y)
+        X = np.array(features_test)
+        predictions = clf.predict(X)
         for prediction, truth in zip(predictions, labels_test):
             if prediction == 0 and truth == 0:
                 true_negatives += 1
@@ -73,6 +79,8 @@ def test_classifier(clf, dataset, feature_list, folds = 1000):
     except:
         print "Got a divide by zero when trying out:", clf
         print "Precision or recall may be undefined due to a lack of true positive predicitons."
+
+    return accuracy, precision, recall, f1, f2
 
 CLF_PICKLE_FILENAME = "my_classifier.pkl"
 DATASET_PICKLE_FILENAME = "my_dataset.pkl"
