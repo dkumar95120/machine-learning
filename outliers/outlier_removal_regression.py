@@ -13,7 +13,6 @@ ages = pickle.load( open("practice_outliers_ages.pkl", "r") )
 net_worths = pickle.load( open("practice_outliers_net_worths.pkl", "r") )
 
 
-
 ### ages and net_worths need to be reshaped into 2D numpy arrays
 ### second argument of reshape command is a tuple of integers: (n_rows, n_columns)
 ### by convention, n_rows is the number of data points
@@ -26,15 +25,14 @@ ages_train, ages_test, net_worths_train, net_worths_test = train_test_split(ages
 ### fill in a regression here!  Name the regression object reg so that
 ### the plotting code below works, and you can see what your regression looks like
 
+from sklearn import linear_model
+reg = linear_model.LinearRegression()
+reg.fit (ages_train, net_worths_train)
+print "slope", reg.coef_
+print "intercept:", reg.intercept_
 
-
-
-
-
-
-
-
-
+score = reg.score(ages_test, net_worths_test)
+print "Test Score:", score
 
 try:
     plt.plot(ages, reg.predict(ages), color="blue")
@@ -77,7 +75,11 @@ if len(cleaned_data) > 0:
     plt.xlabel("ages")
     plt.ylabel("net worths")
     plt.show()
+    print "slope", reg.coef_
+    print "intercept:", reg.intercept_
 
+    score = reg.score(ages_test, net_worths_test)
+    print "Test Score:", score
 
 else:
     print "outlierCleaner() is returning an empty list, no refitting to be done"
