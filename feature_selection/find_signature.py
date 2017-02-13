@@ -13,6 +13,12 @@ authors_file = "../text_learning/your_email_authors.pkl"
 word_data = pickle.load( open(words_file, "r"))
 authors = pickle.load( open(authors_file, "r") )
 
+i=0
+for str in word_data:
+	for word in ("sshacklensf", "cgermannsf"):
+		str = str.replace(word," ")
+	word_data[i] = str
+	i += 1
 
 
 ### test_size is the percentage of events assigned to the test set (the
@@ -28,14 +34,36 @@ vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
 features_train = vectorizer.fit_transform(features_train)
 features_test  = vectorizer.transform(features_test).toarray()
 
-
+total_points = features_train.shape
+print "total points:", total_points
 ### a classic way to overfit is to use a small number
 ### of data points and a large number of features;
 ### train on only 150 events to put ourselves in this regime
 features_train = features_train[:150].toarray()
 labels_train   = labels_train[:150]
 
+from time import time
+from sklearn import tree
+clf = tree.DecisionTreeClassifier()
+t0=time()	
+clf = clf.fit(features_train,labels_train)
+feat_weight = clf.feature_importances_
 
+i = 0
+features = vectorizer.get_feature_names()
+for weight in feat_weight:
+	if (weight > .2):
+		print "feature #", i+1, "with importance", weight, "is ", features[i]
+	i += 1
+
+print "training time (SVC):", round(time()-t0, 3),"s"
+t0 = time()
+labels_pred = clf.predict(features_test)
+print "prediction time:", round(time()-t0,3),"s"
+from sklearn.metrics import accuracy_score 
+score = accuracy_score(labels_test, labels_pred)
+print "DT accuracy = ", score
+print "Number of features:", len(features_train[0])
 
 ### your code goes here
 
