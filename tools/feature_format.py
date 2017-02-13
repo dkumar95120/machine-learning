@@ -50,6 +50,7 @@ def featureFormat( dictionary, features, remove_NaN=True, remove_all_zeroes=True
 
 
     return_list = []
+    data_keys = []
 
     # Key order - first branch is for Python 3 compatibility on mini-projects,
     # second branch is for compatibility on final project.
@@ -77,7 +78,7 @@ def featureFormat( dictionary, features, remove_NaN=True, remove_all_zeroes=True
         # Logic for deciding whether or not to add the data point.
         append = True
         # exclude 'poi' class as criteria.
-        if features[0] == 'poi':
+        if features[0] == "poi":
             test_list = tmp_list[1:]
         else:
             test_list = tmp_list
@@ -98,6 +99,7 @@ def featureFormat( dictionary, features, remove_NaN=True, remove_all_zeroes=True
         ### Append the data point if flagged for addition.
         if append:
             return_list.append( np.array(tmp_list) )
+            data_keys.append(key)
 
     return np.array(return_list)
 
@@ -121,7 +123,7 @@ def targetFeatureSplit( data ):
         target.append( item[0] )
         features.append( item[1:] )
 
-    return target, features
+    return np.array(target), np.array(features)
 
 
 
