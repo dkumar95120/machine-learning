@@ -27,28 +27,34 @@ npoi = 0
 nsal = 0
 nemail = 0
 ntpay=0
-nppoi=0
+nopoi=opoi=0
+nrpoi=rpoi=0
+nepoi=epoi=0
 print "name                         poi    salary     payment  stock_value    poi_to_this"
 for name in enron_data.keys():
-	if (enron_data[name]['total_payments'] > 2000000 or enron_data[name]['from_poi_to_this_person'] > 50 or enron_data[name]['from_this_person_to_poi'] > 50):
-		print '{0:20} {1:>10} {2:>10} {3:>10} {4:>10} {5:>10}'.format(name[:20], 
-												enron_data[name]['poi'],
-												enron_data[name]['salary'], 
-												enron_data[name]['total_payments'], 
-												enron_data[name]['total_stock_value'],
-												enron_data[name]['from_poi_to_this_person'])
 	if (enron_data[name]["poi"] == 1): 
 		npoi = npoi + 1
-		if (enron_data[name]["total_payments"] != "NaN"): nppoi = nppoi + 1
+		if (enron_data[name]["other"] != "NaN"): opoi += 1
+		if (enron_data[name]["shared_receipt_with_poi"] != "NaN"): rpoi += 1
+		if (enron_data[name]["expenses"] != "NaN"): epoi += 1
+		print name
+		for feature in enron_data[name].keys():
+			print '{0:25}:\t{1:>22}'.format(feature, enron_data[name][feature])
+	else:
+		if (enron_data[name]["other"] != "NaN"): nopoi += 1
+		if (enron_data[name]["shared_receipt_with_poi"] != "NaN"): nrpoi += 1
+		if (enron_data[name]["expenses"] != "NaN"): nepoi += 1
 	if (enron_data[name]["salary"] != "NaN"): nsal = nsal + 1
 	if (enron_data[name]["email_address"] != "NaN"): nemail = nemail + 1
 	if (enron_data[name]["total_payments"] != "NaN"): ntpay = ntpay + 1
 
 print "number of person of interest:", npoi
-print "number of person getting salary:", nsal
-print "number of person with email address:", nemail
-print "number of person with total payments:", ntpay
-print "number of poi with total payments:", nppoi
+print "number of poi with other:", opoi
+print "number of non-poi with other:", nopoi
+print "number of poi with shared_receipt_with_poi:", rpoi
+print "number of non-poi with shared_receipt_with_poi:", nrpoi
+print "number of poi with expenses:", epoi
+print "number of non-poi with expenses:", nepoi
 
 poi_names={}
 npoi = 0
