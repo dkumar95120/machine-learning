@@ -29,7 +29,8 @@ from sklearn.feature_selection import SelectKBest
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
 ### The first feature must be "poi".
-features_list = ['poi', 'total_payments', 'total_stock_value', 'from_poi_to_this_person'] # You will need to use more features
+#features_list = ['poi', 'total_payments', 'total_stock_value', 'from_poi_to_this_person', 'expenses', 'other','shared_receipt_with_poi'] # You will need to use more features
+features_list = ['poi', 'expenses', 'shared_receipt_with_poi'] # You will need to use more features
 
 ### Load the dictionary containing the dataset
 with open("final_project_dataset.pkl", "r") as data_file:
@@ -43,26 +44,26 @@ data_dict.pop( "TOTAL", 0 )
 my_dataset = data_dict
 keys = sorted(my_dataset.keys())
 ### add a feature for total_payments/salary to see who benefited the most radically due to non-salary compensation
-fname = 'payment_to_salary'
-for name in keys:
-	if (my_dataset[name]['total_payments'] != 'NaN' and my_dataset[name]['salary'] != 'NaN'):
-		my_dataset[name][fname] = float(my_dataset[name]['total_payments'])/my_dataset[name]['salary']
-	else: # to avoid this person from being removed from the master list
-		my_dataset[name][fname] = 0.000001
-features_list.append(fname)
+#fname = 'payment_to_salary'
+#for name in keys:
+#	if (my_dataset[name]['total_payments'] != 'NaN' and my_dataset[name]['salary'] != 'NaN'):
+#		my_dataset[name][fname] = float(my_dataset[name]['total_payments'])/my_dataset[name]['salary']
+#	else: # to avoid this person from being removed from the master list
+#		my_dataset[name][fname] = 0.0
+#features_list.append(fname)
 ### add a feature for Total_stock/total_payments to see who had most to gain from the stock
 fname = 'total_stock_to_payments'
 for name in keys:
 	if (my_dataset[name]['total_stock_value'] != 'NaN' and my_dataset[name]['total_payments'] != 'NaN'):
 		my_dataset[name][fname] = float(my_dataset[name]['total_stock_value'])/my_dataset[name]['total_payments']
 	else: # to avoid this person from being removed from the master list
-		my_dataset[name][fname] = 0.000001
+		my_dataset[name][fname] = 0.0
 features_list.append(fname)
 
 nfeat = len(features_list)
 print "number of features:", nfeat
 ### Extract features and labels from dataset for local testing
-data = featureFormat(my_dataset, features_list, sort_keys = True)
+data = featureFormat(my_dataset, features_list, remove_all_zeroes=False, sort_keys = True)
 labels, features = targetFeatureSplit(data)
 # scale features to normalize them
 #features = preprocessing.scale(np.array(features))
@@ -72,14 +73,19 @@ labels = np.array(labels)
 nsample = len(labels)
 print "number of keys:", len(keys)
 print " number of samples:", nsample
-print "emp name                        poi   payment  stock_value    poi_to_this  payment/salary total_stock/payments"
+print "emp name                 ",
+for feature in features_list:
+    print '{:>10}'.format(feature),
+print ''
 i = 0
-for name in keys:
+select_feature = 1
+for i in range(0,nsample):
+	name = keys[i]
 	print '{:3}'.format(i+1),
 	print '{:20}'.format(name[:20]),
 	print '{:>10}'.format(labels[i]),
 	for k in range (0,nfeat-1):
-		print '{:>10}'.format(features[i][k]),
+		print '{:>12.2f}\t'.format(features[i][k]),
 	print ''
 	i += 1
 
@@ -100,15 +106,18 @@ clf_names = [
          	"QDA"]
 classifiers = [
 	GaussianNB(),
-    SVC (gamma=.1, C=.1, class_weight='balanced',random_state=42),
-    DecisionTreeClassifier(min_samples_split=6, splitter='random', max_depth=2),
+    SVC (gamma=.1, C=.1),
+    DecisionTreeClassifier(min_samples_split=2, splitter='best', max_depth=4, criterion='entropy'),
 	KNeighborsClassifier(3, weights='distance'),
     RandomForestClassifier(n_estimators=10, min_samples_leaf=3, min_samples_split=3, random_state=42, class_weight='balanced'),
-    AdaBoostClassifier(random_state=0),
+    AdaBoostClassifier(DecisionTreeClassifier(min_samples_split=2, splitter='best', max_depth=4), random_state=0),
     QuadraticDiscriminantAnalysis()]
 
 # use a full grid over all parameters to tune classifier using GridSearchCV
-# param_grid = {'random_state':[0,1]}
+optimize_clf = 0
+param_grid = {'min_samples_split':[2,4,6,8],
+			'splitter':['random','best'],
+			'max_depth':[2,4,6,8,10,15]}
 
 #minimum score required to consider classification a success
 recall = precision = .3 
@@ -139,19 +148,27 @@ for do_pca in (0,1):
 			steps=[('feature_selection',kbest),("pca", pca),('clf',clf)]
 			clf = Pipeline(steps)
 
-#		grid_search = GridSearchCV(clf, param_grid=None)
-#		grid_search.fit(np.array(features_train), np.array(labels_train))
+		if (select_feature and name == 'Decision Tree' and do_pca == 0):
+			print "Feature Importance:"
+			clf.fit(features_train, labels_train)
+			for i in range(0,m_feat):
+				print '{0:25}{1:>10.3f}'.format(features_list[i+1], clf.feature_importances_[i])
 
-#		print "best score", grid_search.best_score_
-#		print "best params", grid_search.best_params_
+		if (optimize_clf and name == 'Decision Tree' and do_pca == 0) :
+			grid_search = GridSearchCV(clf, param_grid=param_grid)
+			grid_search.fit(np.array(features_train), np.array(labels_train))
+			clf = grid_search.best_estimator_
+			print "best score", grid_search.best_score_
+			print "best params", grid_search.best_params_
+			break
 
-	### get classifier metrics from test_classifier
+		### get classifier metrics from test_classifier
 		clf_accuracy, clf_precision, clf_recall, clf_f1, clf_f2 = test_classifier (clf, my_dataset, features_list)
 
-	### Task 6: Dump your classifier, dataset, and features_list so anyone can
-	### check your results. You do not need to change anything below, but make sure
-	### that the version of poi_id.py that you submit can be run on its own and
-	### generates the necessary .pkl files for validating your results.
+		### Task 6: Dump your classifier, dataset, and features_list so anyone can
+		### check your results. You do not need to change anything below, but make sure
+		### that the version of poi_id.py that you submit can be run on its own and
+		### generates the necessary .pkl files for validating your results.
 		if (clf_precision > precision and clf_recall > recall):
 			print "***found better precision and recall:", clf_precision, clf_recall
 			recall = clf_recall
